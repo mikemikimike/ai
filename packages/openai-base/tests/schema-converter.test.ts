@@ -433,6 +433,20 @@ describe('makeStructuredOutputCompatible', () => {
   })
 })
 
+  it('preserves positional tuple item schemas', () => {
+    const schema = {
+      type: 'array',
+      items: [
+        { type: 'number', minimum: -180 },
+        { type: 'number', minimum: -90 },
+      ],
+    }
+
+    const result: any = makeStructuredOutputCompatible(schema)
+
+    expect(result.items).toEqual(schema.items)
+  })
+
 describe('isStrictModeCompatible', () => {
   it('returns true for a plain object schema in the strict subset', () => {
     expect(
