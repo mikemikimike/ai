@@ -411,12 +411,24 @@ function coerceStrictSchema(
   }
 
   if (result.type === 'array' && result.items) {
-    const nested = coerceStrictSchema(result.items, result.items.required || [])
-    result.items = nested.schema
-    if (nested.nullWideningMap) {
-      nullWideningMap.items = nested.nullWideningMap
+    if (Array.isArray(result.items)) {
+      result.items = result.items.map((item) =>
+        coerceStrictSchema(item, item.required || []).schema,
+      )
+    } else {
+      const nested = coerceStrictSchema(result.items, result.items.required || [])
+      result.items = nested.schema
+      if (nested.nullWideningMap) {
+        nullWideningMap.items = nested.nullWideningMap
+      }
+      hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
     }
-    hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
+  }
+
+  if (Array.isArray(result.prefixItems)) {
+    result.prefixItems = result.prefixItems.map((item) =>
+      coerceStrictSchema(item, item.required || []).schema,
+    )
   }
 
   if (result.anyOf && Array.isArray(result.anyOf)) {
