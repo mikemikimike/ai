@@ -476,6 +476,28 @@ describe('makeStructuredOutputCompatible', () => {
     })
   })
 
+  it('preserves boolean tuple schemas and additionalItems', () => {
+    const schema = { type: 'array', items: [false], additionalItems: false }
+
+    const result: any = makeStructuredOutputCompatible(schema)
+
+    expect(result.items).toEqual([false])
+    expect(result.additionalItems).toBe(false)
+  })
+
+  it('preserves separate metadata for items and prefixItems', () => {
+    const schema = {
+      type: 'array',
+      items: [{ type: 'object', properties: { item: { type: 'string' } }, required: [] }],
+      prefixItems: [{ type: 'object', properties: { prefix: { type: 'string' } }, required: [] }],
+    }
+
+    const { nullWideningMap } = makeStructuredOutputCompatibleWithMap(schema)
+
+    expect(nullWideningMap?.items).toEqual([{ properties: { item: { widened: true } } }])
+    expect(nullWideningMap?.prefixItems).toEqual([{ properties: { prefix: { widened: true } } }])
+  })
+
   it('recursively coerces prefixItems', () => {
     const schema = {
       type: 'array',
