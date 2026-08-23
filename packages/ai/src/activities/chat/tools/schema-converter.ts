@@ -172,7 +172,7 @@ function makeStructuredOutputCompatible(
         widenedHere = wasOptional
         const itemMaps = nestedItems.map((nested) => nested?.nullWidening ?? {})
         childMap = itemMaps.some((itemMap) => Object.keys(itemMap).length > 0)
-          ? { items: itemMaps }
+          ? { items: Array.isArray(prop.items) ? itemMaps : itemMaps[0] }
           : undefined
         if (Array.isArray(prop.prefixItems)) {
           const prefixItems = prop.prefixItems.map((item) =>

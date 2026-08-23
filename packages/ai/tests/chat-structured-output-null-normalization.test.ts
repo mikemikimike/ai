@@ -293,6 +293,20 @@ describe('convertSchemaForStructuredOutput → undoNullWidening round trip', () 
     expect('meta' in result).toBe(false)
   })
 
+  it('un-widens every item in a homogeneous array property', () => {
+    const outputSchema = z.object({
+      items: z.array(z.object({ label: z.string().optional() })),
+    })
+
+    const { nullWideningMap } = convertSchemaForStructuredOutput(outputSchema)
+    expect(
+      undoNullWidening(
+        { items: [{ label: null }, { label: null }, { label: 'kept' }] },
+        nullWideningMap,
+      ),
+    ).toEqual({ items: [{}, {}, { label: 'kept' }] })
+  })
+
   it('keeps a genuine `.nullable()` null inside array items', () => {
     // The widener does NOT touch `note` (it's `.nullable()`, not `.optional()`),
     // so its null must survive even though it sits inside an array item — the
