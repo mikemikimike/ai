@@ -459,12 +459,26 @@ it('preserves tuple items nested in object properties', () => {
   expect(result.properties.bbox.items).toEqual(schema.properties.bbox.items)
 })
 
-it('preserves boolean tuple schemas and additionalItems', () => {
-  const schema = { type: 'array', items: [false], additionalItems: false }
+it('preserves boolean tuple schemas and positional metadata', () => {
+  const schema = {
+    type: 'array',
+    items: [false, { type: 'object', properties: { item: {} }, required: [] }],
+    prefixItems: [
+      false,
+      { type: 'object', properties: { prefix: {} }, required: [] },
+    ],
+    additionalItems: false,
+  }
 
+  const { nullWideningMap } = makeStructuredOutputCompatibleWithMap(schema)
   const result: any = makeStructuredOutputCompatible(schema)
 
-  expect(result.items).toEqual([false])
+  expect(result.items[0]).toBe(false)
+  expect(result.items[1].additionalProperties).toBe(false)
+  expect(result.prefixItems[0]).toBe(false)
+  expect(result.prefixItems[1].additionalProperties).toBe(false)
+  expect(nullWideningMap?.items?.[0]).toEqual({})
+  expect(nullWideningMap?.prefixItems?.[0]).toEqual({})
   expect(result.additionalItems).toBe(false)
 })
 

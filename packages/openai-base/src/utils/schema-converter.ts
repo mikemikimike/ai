@@ -409,7 +409,10 @@ function coerceStrictSchema(
     if (Array.isArray(result.items)) {
       const itemMaps: Array<NullWideningMap> = []
       result.items = result.items.map((item) => {
-        if (!isSchemaObject(item)) return item
+        if (!isSchemaObject(item)) {
+          itemMaps.push({})
+          return item
+        }
         const nested = coerceStrictSchema(item, item.required || [])
         itemMaps.push(nested.nullWideningMap ?? {})
         hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
@@ -434,7 +437,10 @@ function coerceStrictSchema(
   if (Array.isArray(result.prefixItems)) {
     const itemMaps: Array<NullWideningMap> = []
     result.prefixItems = result.prefixItems.map((item) => {
-      if (!isSchemaObject(item)) return item
+      if (!isSchemaObject(item)) {
+        itemMaps.push({})
+        return item
+      }
       const nested = coerceStrictSchema(item, item.required || [])
       itemMaps.push(nested.nullWideningMap ?? {})
       hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
