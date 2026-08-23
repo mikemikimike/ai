@@ -477,8 +477,12 @@ it('preserves boolean tuple schemas and positional metadata', () => {
   expect(result.items[1].additionalProperties).toBe(false)
   expect(result.prefixItems[0]).toBe(false)
   expect(result.prefixItems[1].additionalProperties).toBe(false)
-  expect(nullWideningMap?.items?.[0]).toEqual({})
-  expect(nullWideningMap?.prefixItems?.[0]).toEqual({})
+  expect(nullWideningMap?.items?.[1]).toEqual({
+    properties: { item: { widened: true } },
+  })
+  expect(nullWideningMap?.prefixItems?.[1]).toEqual({
+    properties: { prefix: { widened: true } },
+  })
   expect(result.additionalItems).toBe(false)
 })
 
