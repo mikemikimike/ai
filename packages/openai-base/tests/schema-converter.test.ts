@@ -433,83 +433,105 @@ describe('makeStructuredOutputCompatible', () => {
   })
 })
 
-  it('preserves positional tuple item schemas', () => {
-    const items = [
-      { type: 'number', minimum: -180 },
-      { type: 'number', minimum: -90 },
-    ]
-    const schema = { type: 'array', items }
+it('preserves positional tuple item schemas', () => {
+  const items = [
+    { type: 'number', minimum: -180 },
+    { type: 'number', minimum: -90 },
+  ]
+  const schema = { type: 'array', items }
 
-    const result: any = makeStructuredOutputCompatible(schema)
+  const result: any = makeStructuredOutputCompatible(schema)
 
-    expect(result.items).toEqual(items)
+  expect(result.items).toEqual(items)
+})
+
+it('preserves tuple items nested in object properties', () => {
+  const schema = {
+    type: 'object',
+    properties: {
+      bbox: { type: 'array', items: [{ type: 'number' }, { type: 'number' }] },
+    },
+    required: ['bbox'],
+  }
+
+  const result: any = makeStructuredOutputCompatible(schema)
+
+  expect(result.properties.bbox.items).toEqual(schema.properties.bbox.items)
+})
+
+it('preserves null-widening metadata for tuple object items', () => {
+  const schema = {
+    type: 'array',
+    items: [
+      {
+        type: 'object',
+        properties: { value: { type: 'string' } },
+        required: [],
+      },
+    ],
+  }
+
+  const { nullWideningMap } = makeStructuredOutputCompatibleWithMap(schema)
+
+  expect(nullWideningMap).toEqual({
+    items: [{ properties: { value: { widened: true } } }],
   })
+})
 
-  it('preserves tuple items nested in object properties', () => {
-    const schema = {
-      type: 'object',
-      properties: { bbox: { type: 'array', items: [{ type: 'number' }, { type: 'number' }] } },
-      required: ['bbox'],
-    }
+it('preserves boolean tuple schemas and additionalItems', () => {
+  const schema = { type: 'array', items: [false], additionalItems: false }
 
-    const result: any = makeStructuredOutputCompatible(schema)
+  const result: any = makeStructuredOutputCompatible(schema)
 
-    expect(result.properties.bbox.items).toEqual(schema.properties.bbox.items)
-  })
+  expect(result.items).toEqual([false])
+  expect(result.additionalItems).toBe(false)
+})
 
-  it('preserves null-widening metadata for tuple object items', () => {
-    const schema = {
-      type: 'array',
-      items: [
-        {
-          type: 'object',
-          properties: { value: { type: 'string' } },
-          required: [],
-        },
-      ],
-    }
+it('preserves separate metadata for items and prefixItems', () => {
+  const schema = {
+    type: 'array',
+    items: [
+      {
+        type: 'object',
+        properties: { item: { type: 'string' } },
+        required: [],
+      },
+    ],
+    prefixItems: [
+      {
+        type: 'object',
+        properties: { prefix: { type: 'string' } },
+        required: [],
+      },
+    ],
+  }
 
-    const { nullWideningMap } = makeStructuredOutputCompatibleWithMap(schema)
+  const { nullWideningMap } = makeStructuredOutputCompatibleWithMap(schema)
 
-    expect(nullWideningMap).toEqual({
-      items: [{ properties: { value: { widened: true } } }],
-    })
-  })
+  expect(nullWideningMap?.items).toEqual([
+    { properties: { item: { widened: true } } },
+  ])
+  expect(nullWideningMap?.prefixItems).toEqual([
+    { properties: { prefix: { widened: true } } },
+  ])
+})
 
-  it('preserves boolean tuple schemas and additionalItems', () => {
-    const schema = { type: 'array', items: [false], additionalItems: false }
+it('recursively coerces prefixItems', () => {
+  const schema = {
+    type: 'array',
+    prefixItems: [
+      {
+        type: 'object',
+        properties: { value: { type: 'string' } },
+        required: ['value'],
+      },
+    ],
+  }
 
-    const result: any = makeStructuredOutputCompatible(schema)
+  const result: any = makeStructuredOutputCompatible(schema)
 
-    expect(result.items).toEqual([false])
-    expect(result.additionalItems).toBe(false)
-  })
-
-  it('preserves separate metadata for items and prefixItems', () => {
-    const schema = {
-      type: 'array',
-      items: [{ type: 'object', properties: { item: { type: 'string' } }, required: [] }],
-      prefixItems: [{ type: 'object', properties: { prefix: { type: 'string' } }, required: [] }],
-    }
-
-    const { nullWideningMap } = makeStructuredOutputCompatibleWithMap(schema)
-
-    expect(nullWideningMap?.items).toEqual([{ properties: { item: { widened: true } } }])
-    expect(nullWideningMap?.prefixItems).toEqual([{ properties: { prefix: { widened: true } } }])
-  })
-
-  it('recursively coerces prefixItems', () => {
-    const schema = {
-      type: 'array',
-      prefixItems: [
-        { type: 'object', properties: { value: { type: 'string' } }, required: ['value'] },
-      ],
-    }
-
-    const result: any = makeStructuredOutputCompatible(schema)
-
-    expect(result.prefixItems[0].additionalProperties).toBe(false)
-  })
+  expect(result.prefixItems[0].additionalProperties).toBe(false)
+})
 
 describe('isStrictModeCompatible', () => {
   it('returns true for a plain object schema in the strict subset', () => {

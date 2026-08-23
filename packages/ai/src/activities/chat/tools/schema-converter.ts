@@ -147,7 +147,9 @@ function makeStructuredOutputCompatible(
         childMap = nested.nullWidening
       } else if (prop.type === 'array') {
         const itemSchemas = prop.items
-          ? Array.isArray(prop.items) ? prop.items : [prop.items]
+          ? Array.isArray(prop.items)
+            ? prop.items
+            : [prop.items]
           : []
         const nestedItems = itemSchemas.map((item) =>
           typeof item === 'object' && item !== null
@@ -157,9 +159,13 @@ function makeStructuredOutputCompatible(
         properties[propName] = {
           ...prop,
           ...(prop.items
-            ? { items: Array.isArray(prop.items)
-                ? nestedItems.map((nested, index) => nested?.schema ?? itemSchemas[index])
-                : nestedItems[0]?.schema ?? prop.items }
+            ? {
+                items: Array.isArray(prop.items)
+                  ? nestedItems.map(
+                      (nested, index) => nested?.schema ?? itemSchemas[index],
+                    )
+                  : (nestedItems[0]?.schema ?? prop.items),
+              }
             : {}),
           ...(wasOptional ? { type: ['array', 'null'] } : {}),
         }
@@ -177,7 +183,9 @@ function makeStructuredOutputCompatible(
           properties[propName].prefixItems = prefixItems.map(
             (nested, index) => nested?.schema ?? prop.prefixItems[index],
           )
-          const prefixMaps = prefixItems.map((nested) => nested?.nullWidening ?? {})
+          const prefixMaps = prefixItems.map(
+            (nested) => nested?.nullWidening ?? {},
+          )
           if (prefixMaps.some((itemMap) => Object.keys(itemMap).length > 0)) {
             childMap = { ...(childMap ?? {}), prefixItems: prefixMaps }
           }
@@ -214,15 +222,19 @@ function makeStructuredOutputCompatible(
   // Handle array item and prefix-item schemas recursively.
   if (result.type === 'array') {
     if (result.items) {
-      const itemSchemas = Array.isArray(result.items) ? result.items : [result.items]
+      const itemSchemas = Array.isArray(result.items)
+        ? result.items
+        : [result.items]
       const nestedItems = itemSchemas.map((item) =>
         typeof item === 'object' && item !== null
           ? makeStructuredOutputCompatible(item, item.required || [])
           : undefined,
       )
       result.items = Array.isArray(result.items)
-        ? nestedItems.map((nested, index) => nested?.schema ?? itemSchemas[index])
-        : nestedItems[0]?.schema ?? result.items
+        ? nestedItems.map(
+            (nested, index) => nested?.schema ?? itemSchemas[index],
+          )
+        : (nestedItems[0]?.schema ?? result.items)
       const itemMaps = nestedItems.map((nested) => nested?.nullWidening ?? {})
       if (itemMaps.some((itemMap) => Object.keys(itemMap).length > 0)) {
         map.items = Array.isArray(result.items) ? itemMaps : itemMaps[0]
@@ -237,7 +249,9 @@ function makeStructuredOutputCompatible(
       result.prefixItems = prefixSchemas.map(
         (nested, index) => nested?.schema ?? result.prefixItems[index],
       )
-      const prefixMaps = prefixSchemas.map((nested) => nested?.nullWidening ?? {})
+      const prefixMaps = prefixSchemas.map(
+        (nested) => nested?.nullWidening ?? {},
+      )
       if (prefixMaps.some((itemMap) => Object.keys(itemMap).length > 0)) {
         map.prefixItems = prefixMaps
       }
