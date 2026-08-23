@@ -529,6 +529,15 @@ it('preserves separate metadata for items and prefixItems', () => {
 })
 
 describe('isStrictModeCompatible', () => {
+  it('rejects prefixItems for OpenAI strict outputs', () => {
+    expect(
+      isStrictModeCompatible({
+        type: 'array',
+        prefixItems: [{ type: 'string' }],
+      }),
+    ).toBe(false)
+  })
+
   it('returns true for a plain object schema in the strict subset', () => {
     expect(
       isStrictModeCompatible({

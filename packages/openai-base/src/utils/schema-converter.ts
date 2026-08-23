@@ -104,6 +104,7 @@ export function makeStructuredOutputCompatibleWithMap(
  * emit these.
  *
  * - `oneOf` / `allOf` / `not` — combinator keywords strict mode rejects
+ * - `prefixItems` — tuple keyword unsupported by OpenAI strict outputs
  * - `$ref` / `$defs` / `definitions` — references and definition pools whose
  *   object subschemas escape the `additionalProperties: false` normalization
  *   strict mode requires
@@ -115,6 +116,7 @@ const STRICT_UNSUPPORTED_KEYWORDS: ReadonlyArray<string> = [
   '$ref',
   '$defs',
   'definitions',
+  'prefixItems',
 ]
 
 /**
