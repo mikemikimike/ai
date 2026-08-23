@@ -434,17 +434,40 @@ describe('makeStructuredOutputCompatible', () => {
 })
 
   it('preserves positional tuple item schemas', () => {
+    const items = [
+      { type: 'number', minimum: -180 },
+      { type: 'number', minimum: -90 },
+    ]
+    const schema = { type: 'array', items }
+
+    const result: any = makeStructuredOutputCompatible(schema)
+
+    expect(result.items).toEqual(items)
+  })
+
+  it('preserves tuple items nested in object properties', () => {
+    const schema = {
+      type: 'object',
+      properties: { bbox: { type: 'array', items: [{ type: 'number' }, { type: 'number' }] } },
+      required: ['bbox'],
+    }
+
+    const result: any = makeStructuredOutputCompatible(schema)
+
+    expect(result.properties.bbox.items).toEqual(schema.properties.bbox.items)
+  })
+
+  it('recursively coerces prefixItems', () => {
     const schema = {
       type: 'array',
-      items: [
-        { type: 'number', minimum: -180 },
-        { type: 'number', minimum: -90 },
+      prefixItems: [
+        { type: 'object', properties: { value: { type: 'string' } }, required: ['value'] },
       ],
     }
 
     const result: any = makeStructuredOutputCompatible(schema)
 
-    expect(result.items).toEqual(schema.items)
+    expect(result.prefixItems[0].additionalProperties).toBe(false)
   })
 
 describe('isStrictModeCompatible', () => {
