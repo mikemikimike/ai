@@ -331,22 +331,11 @@ function coerceStrictSchema(
         prop = nested.schema
         childMap = nested.nullWideningMap
         hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
-      } else if (isSchemaObject(prop) && prop.type === 'array' && prop.items) {
-        if (Array.isArray(prop.items)) {
-          prop = {
-            ...prop,
-            items: prop.items.map((item) =>
-              coerceStrictSchema(item, item.required || []).schema,
-            ),
-          }
-        } else {
-          const nested = coerceStrictSchema(prop.items, prop.items.required || [])
-          prop = { ...prop, items: nested.schema }
-          childMap = nested.nullWideningMap
-            ? { items: nested.nullWideningMap }
-            : undefined
-          hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
-        }
+      } else if (isSchemaObject(prop) && prop.type === 'array') {
+        const nested = coerceStrictSchema(prop, [])
+        prop = nested.schema
+        childMap = nested.nullWideningMap
+        hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
       } else if (isSchemaObject(prop) && prop.anyOf) {
         const nested = coerceStrictSchema(prop, prop.required || [])
         prop = nested.schema
