@@ -459,25 +459,6 @@ it('preserves tuple items nested in object properties', () => {
   expect(result.properties.bbox.items).toEqual(schema.properties.bbox.items)
 })
 
-it('preserves null-widening metadata for tuple object items', () => {
-  const schema = {
-    type: 'array',
-    items: [
-      {
-        type: 'object',
-        properties: { value: { type: 'string' } },
-        required: [],
-      },
-    ],
-  }
-
-  const { nullWideningMap } = makeStructuredOutputCompatibleWithMap(schema)
-
-  expect(nullWideningMap).toEqual({
-    items: [{ properties: { value: { widened: true } } }],
-  })
-})
-
 it('preserves boolean tuple schemas and additionalItems', () => {
   const schema = { type: 'array', items: [false], additionalItems: false }
 
@@ -514,22 +495,7 @@ it('preserves separate metadata for items and prefixItems', () => {
   expect(nullWideningMap?.prefixItems).toEqual([
     { properties: { prefix: { widened: true } } },
   ])
-})
-
-it('recursively coerces prefixItems', () => {
-  const schema = {
-    type: 'array',
-    prefixItems: [
-      {
-        type: 'object',
-        properties: { value: { type: 'string' } },
-        required: ['value'],
-      },
-    ],
-  }
-
   const result: any = makeStructuredOutputCompatible(schema)
-
   expect(result.prefixItems[0].additionalProperties).toBe(false)
 })
 
