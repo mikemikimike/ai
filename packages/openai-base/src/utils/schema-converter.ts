@@ -407,9 +407,16 @@ function coerceStrictSchema(
 
   if (result.type === 'array' && result.items) {
     if (Array.isArray(result.items)) {
-      result.items = result.items.map((item) =>
-        coerceStrictSchema(item, item.required || []).schema,
-      )
+      const itemMaps: NullWideningMap[] = []
+      result.items = result.items.map((item) => {
+        const nested = coerceStrictSchema(item, item.required || [])
+        itemMaps.push(nested.nullWideningMap ?? {})
+        hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
+        return nested.schema
+      })
+      if (itemMaps.some((map) => Object.keys(map).length > 0)) {
+        nullWideningMap.items = itemMaps
+      }
     } else {
       const nested = coerceStrictSchema(result.items, result.items.required || [])
       result.items = nested.schema
@@ -421,9 +428,16 @@ function coerceStrictSchema(
   }
 
   if (Array.isArray(result.prefixItems)) {
-    result.prefixItems = result.prefixItems.map((item) =>
-      coerceStrictSchema(item, item.required || []).schema,
-    )
+    const itemMaps: NullWideningMap[] = []
+    result.prefixItems = result.prefixItems.map((item) => {
+      const nested = coerceStrictSchema(item, item.required || [])
+      itemMaps.push(nested.nullWideningMap ?? {})
+      hasUntrackableAnyOfWidening ||= nested.hasUntrackableAnyOfWidening
+      return nested.schema
+    })
+    if (itemMaps.some((map) => Object.keys(map).length > 0)) {
+      nullWideningMap.items = itemMaps
+    }
   }
 
   if (result.anyOf && Array.isArray(result.anyOf)) {
