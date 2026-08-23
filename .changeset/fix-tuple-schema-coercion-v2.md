@@ -1,0 +1,1 @@
+---`n'@tanstack/openai-base': patch`n---`n`nPreserve positional tuple schemas during strict output conversion.`n
