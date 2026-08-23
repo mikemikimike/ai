@@ -68,7 +68,8 @@ export function transformNullsToUndefined<T>(obj: T): T {
 export type NullWideningMap = {
   widened?: boolean
   properties?: Record<string, NullWideningMap>
-  items?: NullWideningMap | Array<NullWideningMap>`n  prefixItems?: Array<NullWideningMap>
+  items?: NullWideningMap | Array<NullWideningMap>
+  prefixItems?: Array<NullWideningMap>
 }
 
 function walk(value: unknown, map: NullWideningMap | undefined): unknown {
