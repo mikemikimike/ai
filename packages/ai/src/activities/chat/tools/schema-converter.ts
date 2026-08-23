@@ -145,20 +145,43 @@ function makeStructuredOutputCompatible(
           : nested.schema
         widenedHere = wasOptional
         childMap = nested.nullWidening
-      } else if (prop.type === 'array' && prop.items) {
-        const items = Array.isArray(prop.items) ? prop.items[0] : prop.items
-        const nestedItems = items
-          ? makeStructuredOutputCompatible(items, items.required || [])
-          : undefined
+      } else if (prop.type === 'array') {
+        const itemSchemas = prop.items
+          ? Array.isArray(prop.items) ? prop.items : [prop.items]
+          : []
+        const nestedItems = itemSchemas.map((item) =>
+          typeof item === 'object' && item !== null
+            ? makeStructuredOutputCompatible(item, item.required || [])
+            : undefined,
+        )
         properties[propName] = {
           ...prop,
-          items: nestedItems ? nestedItems.schema : prop.items,
+          ...(prop.items
+            ? { items: Array.isArray(prop.items)
+                ? nestedItems.map((nested, index) => nested?.schema ?? itemSchemas[index])
+                : nestedItems[0]?.schema ?? prop.items }
+            : {}),
           ...(wasOptional ? { type: ['array', 'null'] } : {}),
         }
         widenedHere = wasOptional
-        childMap = nestedItems?.nullWidening
-          ? { items: nestedItems.nullWidening }
+        const itemMaps = nestedItems.map((nested) => nested?.nullWidening ?? {})
+        childMap = itemMaps.some((itemMap) => Object.keys(itemMap).length > 0)
+          ? { items: itemMaps }
           : undefined
+        if (Array.isArray(prop.prefixItems)) {
+          const prefixItems = prop.prefixItems.map((item) =>
+            typeof item === 'object' && item !== null
+              ? makeStructuredOutputCompatible(item, item.required || [])
+              : undefined,
+          )
+          properties[propName].prefixItems = prefixItems.map(
+            (nested, index) => nested?.schema ?? prop.prefixItems[index],
+          )
+          const prefixMaps = prefixItems.map((nested) => nested?.nullWidening ?? {})
+          if (prefixMaps.some((itemMap) => Object.keys(itemMap).length > 0)) {
+            childMap = { ...(childMap ?? {}), prefixItems: prefixMaps }
+          }
+        }
       } else if (wasOptional) {
         // Make optional fields nullable by adding null to the type. Mark
         // `widenedHere` only where we actually add `null`; a field already
@@ -188,16 +211,36 @@ function makeStructuredOutputCompatible(
     if (Object.keys(propertyMaps).length > 0) map.properties = propertyMaps
   }
 
-  // Handle array types with object items
-  if (result.type === 'array' && result.items) {
-    const items = Array.isArray(result.items) ? result.items[0] : result.items
-    if (items) {
-      const nestedItems = makeStructuredOutputCompatible(
-        items,
-        items.required || [],
+  // Handle array item and prefix-item schemas recursively.
+  if (result.type === 'array') {
+    if (result.items) {
+      const itemSchemas = Array.isArray(result.items) ? result.items : [result.items]
+      const nestedItems = itemSchemas.map((item) =>
+        typeof item === 'object' && item !== null
+          ? makeStructuredOutputCompatible(item, item.required || [])
+          : undefined,
       )
-      result.items = nestedItems.schema
-      if (nestedItems.nullWidening) map.items = nestedItems.nullWidening
+      result.items = Array.isArray(result.items)
+        ? nestedItems.map((nested, index) => nested?.schema ?? itemSchemas[index])
+        : nestedItems[0]?.schema ?? result.items
+      const itemMaps = nestedItems.map((nested) => nested?.nullWidening ?? {})
+      if (itemMaps.some((itemMap) => Object.keys(itemMap).length > 0)) {
+        map.items = Array.isArray(result.items) ? itemMaps : itemMaps[0]
+      }
+    }
+    if (Array.isArray(result.prefixItems)) {
+      const prefixSchemas = result.prefixItems.map((item) =>
+        typeof item === 'object' && item !== null
+          ? makeStructuredOutputCompatible(item, item.required || [])
+          : undefined,
+      )
+      result.prefixItems = prefixSchemas.map(
+        (nested, index) => nested?.schema ?? result.prefixItems[index],
+      )
+      const prefixMaps = prefixSchemas.map((nested) => nested?.nullWidening ?? {})
+      if (prefixMaps.some((itemMap) => Object.keys(itemMap).length > 0)) {
+        map.prefixItems = prefixMaps
+      }
     }
   }
 
