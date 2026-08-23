@@ -462,10 +462,21 @@ it('preserves tuple items nested in object properties', () => {
 it('preserves boolean tuple schemas and positional metadata', () => {
   const schema = {
     type: 'array',
-    items: [false, { type: 'object', properties: { item: {} }, required: [] }],
+    items: [
+      false,
+      {
+        type: 'object',
+        properties: { item: { type: 'string' } },
+        required: [],
+      },
+    ],
     prefixItems: [
       false,
-      { type: 'object', properties: { prefix: {} }, required: [] },
+      {
+        type: 'object',
+        properties: { prefix: { type: 'string' } },
+        required: [],
+      },
     ],
     additionalItems: false,
   }
