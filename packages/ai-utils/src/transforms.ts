@@ -68,7 +68,7 @@ export function transformNullsToUndefined<T>(obj: T): T {
 export type NullWideningMap = {
   widened?: boolean
   properties?: Record<string, NullWideningMap>
-  items?: NullWideningMap | Array<NullWideningMap>
+  items?: NullWideningMap | Array<NullWideningMap>`n  prefixItems?: Array<NullWideningMap>
 }
 
 function walk(value: unknown, map: NullWideningMap | undefined): unknown {
@@ -81,13 +81,13 @@ function walk(value: unknown, map: NullWideningMap | undefined): unknown {
   if (typeof value !== 'object' || !map) return value
 
   if (Array.isArray(value)) {
-    const { items } = map
-    if (!items) return value
-    // Tuple maps (`items: [a, b, …]`) describe each position separately;
-    // a single `items` map applies to every element.
-    return Array.isArray(items)
-      ? value.map((item, index) => walk(item, items[index]))
-      : value.map((item) => walk(item, items))
+    const { items, prefixItems } = map
+    if (!items && !prefixItems) return value
+    return value.map((item, index) => {
+      const prefixMap = prefixItems?.[index]
+      const itemMap = prefixMap ?? (Array.isArray(items) ? items[index] : items)
+      return walk(item, itemMap)
+    })
   }
 
   const { properties } = map
